@@ -13,16 +13,11 @@ public class CountDownLatchDemo1 {
 
     private static Object o1;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 //        closeDoor();
 
         Map<String,String> map = new HashMap<>();
         map.put("1","xiaoxiao");
-        String val = map.put("1","gou");
-        System.out.println(val);
-        Object o = new Object();
-        o1 = new Object();
-        new Object();
     }
 
     private static void closeDoor() throws InterruptedException {
