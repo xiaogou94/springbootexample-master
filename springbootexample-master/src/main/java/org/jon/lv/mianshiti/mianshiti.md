@@ -176,6 +176,31 @@ terminated: terminated()方法结束后，线程池状态就会变成这个了�
 返回值：submit()方法可以返回持有计算结果的Future对象，而execute()没有
 异常处理：submit()方便Exception处理
 
+28#.mysql的innodb如何解决幻读的？
+Innodb引入间隙锁和next-key lock取解决幻读问题
+select * from user where id > 4 and id < 7 for update
+当对范围查询id>4 and id<7 这个范围加锁的时候，会对针对B+数中（4,7） 这个开区间的范围加间隙锁，意味着在这种情况下其他事务
+对这个区间进行插入更新删除都会被锁住，但是还有另一外情况
+select * from user where id > 4
+这条查询语句针对id>4的这个条件加锁，那么它需要锁定多的索引区间，所以这种情况下Innodb引入一个叫next-key lcok机制，
+next-key lock锁，锁定的区间范围是(4,7] (7,10],(10,+~),间隙锁和next-key lock的区别就在加锁的范围，间隙锁锁定的
+是两个索引之间的间隙，而next-key lock会锁定多个索引区间，它是包含了记录锁和间隙锁当我们使用范围查询不仅仅命中record记录
+还包含Gap间隙的时候，在这种情况下使用的是临锁键，也就是next-key lock它是Mysql里面的默认的行锁算法。
+总结：虽然InnoDB里面通过间隙锁方式解决了幻读的问题但是加锁之后一定会影响到并发性能，因此对与性能较高的一些业务场景，我们可以把隔离级别设置不可重复，
+那么这个级别不存在间隙锁也不存在这样的一个性能的影响
 
-
+29#. Springboot启动流程？
+1.首先进入run()方法，run方法中new创建了一个SpringApplication实例
+2.在SpringApplication的构造方法为SpringApplication对象赋一些初值
+3.构造方法执行完成，回到run方法
+该方法实现了如下关键步骤：
+1.创建了应用监听器SpringApplicationRunListeners并开始监听
+2.加载SpringBoot配置环境（ConfigurableEnvironment）,如果是通过Web容器发布，会加载StandardEnvironment
+其最终也是继承了ConfigurableEnvironment
+3.配置环境（Environment）加入到监听器对象(SpringApplicationRunListeners)
+4.创建run方法的返回对象，ConfigurableApplication(应用配置上下文)
+5.回到run方法内，prepareContext方法将listener、environment、applicationArguments、banner等重要组件与上下文
+对象关联
+6.接下来的refreshContext方法，实现将spring-boot-starter-*(mybatis、redis等)自动化配置的关键，包括spring.factories的加载，bean的实例化等核心工作。
+7.配置结束后，Springboot做了一些基本的收尾工作，返回了应用环境上下文。回顾整体流程，Springboot的启动，主要创建了配置环境(environment)、事件监听(listeners)、应用上下文(applicationContext)，并基于以上条件，在容器中开始实例化我们需要的Bean，至此，通过SpringBoot启动的程序已经构造完成。
 
